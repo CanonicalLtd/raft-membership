@@ -23,7 +23,8 @@ import (
 )
 
 func TestHandleChangeRequests_ErrUnknownLeader(t *testing.T) {
-	node := rafttest.NewNode("")
+	node := rafttest.NewNode()
+	node.Start()
 	defer node.Shutdown()
 
 	request := raftmembership.NewJoinRequest("1.2.3.4")
@@ -43,6 +44,7 @@ func TestHandleChangeRequests_ErrUnknownLeader(t *testing.T) {
 
 func TestHandleChangeRequests_ErrDifferentLeader(t *testing.T) {
 	cluster := rafttest.NewCluster(2)
+	cluster.Start()
 	defer cluster.Shutdown()
 
 	node1 := cluster.LeadershipAcquired()
@@ -71,12 +73,14 @@ func TestHandleChangeRequests_ErrDifferentLeader(t *testing.T) {
 }
 
 func TestHandleChangeRequests_KnownPeer(t *testing.T) {
-	node := rafttest.NewNode("")
+	node := rafttest.NewNode()
+	node.Config.EnableSingleNode = true
+	node.Start()
 	defer node.Shutdown()
 
 	node.LeaderKnown()
 
-	request := raftmembership.NewJoinRequest("0")
+	request := raftmembership.NewJoinRequest(node.Transport.LocalAddr())
 	handleOneChangeRequest(node.Raft(), request)
 
 	// The request is effectively a no-op and returns no error.
@@ -86,12 +90,14 @@ func TestHandleChangeRequests_KnownPeer(t *testing.T) {
 }
 
 func TestHandleChangeRequests_LeaveRequest(t *testing.T) {
-	node := rafttest.NewNode("")
+	node := rafttest.NewNode()
+	node.Config.EnableSingleNode = true
+	node.Start()
 	defer node.Shutdown()
 
 	node.LeaderKnown()
 
-	request := raftmembership.NewLeaveRequest("0")
+	request := raftmembership.NewLeaveRequest(node.Transport.LocalAddr())
 	handleOneChangeRequest(node.Raft(), request)
 
 	// The request succeeds.

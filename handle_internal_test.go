@@ -21,7 +21,9 @@ import (
 )
 
 func TestHandleChangeRequests_InvalidChangeRequestKind(t *testing.T) {
-	node := rafttest.NewNode("")
+	node := rafttest.NewNode()
+	node.Config.EnableSingleNode = true
+	node.Start()
 	defer node.Shutdown()
 
 	node.LeaderKnown()
