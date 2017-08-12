@@ -17,8 +17,8 @@ package raftmembership_test
 import (
 	"testing"
 
-	"github.com/dqlite/raft-membership"
-	"github.com/dqlite/raft-test"
+	"github.com/CanonicalLtd/raft-membership"
+	"github.com/CanonicalLtd/raft-test"
 	"github.com/hashicorp/raft"
 )
 

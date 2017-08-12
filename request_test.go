@@ -17,7 +17,7 @@ package raftmembership_test
 import (
 	"testing"
 
-	"github.com/dqlite/raft-membership"
+	"github.com/CanonicalLtd/raft-membership"
 )
 
 func TestChangeRequestKind_String(t *testing.T) {
