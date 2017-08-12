@@ -17,7 +17,7 @@ package raftmembership
 import (
 	"testing"
 
-	"github.com/dqlite/raft-test"
+	"github.com/CanonicalLtd/raft-test"
 )
 
 func TestHandleChangeRequests_InvalidChangeRequestKind(t *testing.T) {

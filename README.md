@@ -1,4 +1,4 @@
-raft-membership [![Build Status](https://travis-ci.org/dqlite/raft-membership.png)](https://travis-ci.org/dqlite/raft-membership) [![Coverage Status](https://coveralls.io/repos/github/dqlite/raft-membership/badge.svg?branch=master)](https://coveralls.io/github/dqlite/raft-membership?branch=master) [![Go Report Card](https://goreportcard.com/badge/github.com/dqlite/raft-membership)](https://goreportcard.com/report/github.com/dqlite/raft-membership) [![GoDoc](https://godoc.org/github.com/dqlite/raft-membership?status.svg)](https://godoc.org/github.com/dqlite/raft-membership)
+raft-membership [![Build Status](https://travis-ci.org/CanonicalLtd/raft-membership.png)](https://travis-ci.org/CanonicalLtd/raft-membership) [![Coverage Status](https://coveralls.io/repos/github/CanonicalLtd/raft-membership/badge.svg?branch=master)](https://coveralls.io/github/CanonicalLtd/raft-membership?branch=master) [![Go Report Card](https://goreportcard.com/badge/github.com/CanonicalLtd/raft-membership)](https://goreportcard.com/report/github.com/CanonicalLtd/raft-membership) [![GoDoc](https://godoc.org/github.com/CanonicalLtd/raft-membership?status.svg)](https://godoc.org/github.com/CanonicalLtd/raft-membership)
 =========
 
 This repository provides the `raftmembership` package, which contains
@@ -8,4 +8,4 @@ from Hashicorp to easily make a node join or leave a cluster.
 Documentation
 ==============
 
-The documentation for this package can be found on [Godoc](http://godoc.org/github.com/dqlite/raft-membership).
+The documentation for this package can be found on [Godoc](http://godoc.org/github.com/CanonicalLtd/raft-membership).
