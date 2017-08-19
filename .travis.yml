@@ -2,9 +2,13 @@ language: go
 
 before_install:
   - go get github.com/mattn/goveralls
+  - mkdir -p $GOPATH/src/github.com/armon/
+  - git clone -b go-1.6-and-1.7-compatibility https://github.com/freeekanayaka/go-metrics.git $GOPATH/src/github.com/armon/go-metrics
 
 script:
   - $HOME/gopath/bin/goveralls -v -service=travis-ci
 
 go:
+  - 1.6
+  - 1.7
   - 1.8
