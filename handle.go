@@ -23,7 +23,7 @@ import (
 // HandleChangeRequests processes ChangeRequest's received through the
 // given channel, using the given raft.Raft instance to add or remove
 // peers to the cluster according to the received requests.
-func HandleChangeRequests(r *raft.Raft, requests chan *ChangeRequest) {
+func HandleChangeRequests(r *raft.Raft, requests <-chan *ChangeRequest) {
 	for request := range requests {
 		// If we currently think we're the leader, let's try
 		// to handle the request, otherwise let's bail out
