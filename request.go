@@ -14,6 +14,11 @@
 
 package raftmembership
 
+import (
+	"fmt"
+	"time"
+)
+
 // ChangeRequest represents a request to change a peer's membership in
 // a raft cluster (either join or leave).
 //
@@ -60,11 +65,17 @@ func (r *ChangeRequest) Kind() ChangeRequestKind {
 	return r.kind
 }
 
-// Error blocks until this ChangeRequest is fully processed and
-// returns any error hit while handling the request, or nil if none
-// was met.
-func (r *ChangeRequest) Error() error {
-	return <-r.done
+// Error blocks until this ChangeRequest is fully processed or the given
+// timeout is reached and returns any error hit while handling the request, or
+// nil if none was met.
+func (r *ChangeRequest) Error(timeout time.Duration) error {
+	var err error
+	select {
+	case err = <-r.done:
+	case <-time.After(timeout):
+		err = fmt.Errorf("timeout waiting for membership change")
+	}
+	return err
 }
 
 // Done should be invoked by the code handling this request (such as

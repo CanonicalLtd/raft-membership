@@ -16,6 +16,7 @@ package raftmembership_test
 
 import (
 	"testing"
+	"time"
 
 	"github.com/CanonicalLtd/raft-membership"
 )
@@ -26,5 +27,16 @@ func TestChangeRequestKind_String(t *testing.T) {
 	}
 	if s := raftmembership.LeaveRequest.String(); s != "leave" {
 		t.Errorf("unexpected string value for leave kind: %s", s)
+	}
+}
+
+func TestChangeRequest_ErrorTimeout(t *testing.T) {
+	request := &raftmembership.ChangeRequest{}
+	err := request.Error(time.Microsecond)
+	if err == nil {
+		t.Fatal("request returned no error")
+	}
+	if err.Error() != "timeout waiting for membership change" {
+		t.Errorf("unexpected error %s", err.Error())
 	}
 }

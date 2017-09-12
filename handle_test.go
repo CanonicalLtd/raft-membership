@@ -16,6 +16,7 @@ package raftmembership_test
 
 import (
 	"testing"
+	"time"
 
 	"github.com/CanonicalLtd/raft-membership"
 	"github.com/CanonicalLtd/raft-test"
@@ -30,7 +31,7 @@ func TestHandleChangeRequests_ErrUnknownLeader(t *testing.T) {
 	request := raftmembership.NewJoinRequest("1.2.3.4")
 	handleOneChangeRequest(node.Raft(), request)
 
-	err := request.Error()
+	err := request.Error(time.Second)
 
 	if err == nil {
 		t.Fatal("no error returned despite no leader was elected yet")
@@ -54,7 +55,7 @@ func TestHandleChangeRequests_ErrDifferentLeader(t *testing.T) {
 	request := raftmembership.NewLeaveRequest("1.2.3.4")
 	handleOneChangeRequest(node2.Raft(), request)
 
-	err := request.Error()
+	err := request.Error(time.Second)
 
 	if err == nil {
 		t.Fatal("no error returned despite request was made to non-leader")
@@ -84,7 +85,7 @@ func TestHandleChangeRequests_KnownPeer(t *testing.T) {
 	handleOneChangeRequest(node.Raft(), request)
 
 	// The request is effectively a no-op and returns no error.
-	if err := request.Error(); err != nil {
+	if err := request.Error(time.Second); err != nil {
 		t.Error(err)
 	}
 }
@@ -101,7 +102,7 @@ func TestHandleChangeRequests_LeaveRequest(t *testing.T) {
 	handleOneChangeRequest(node.Raft(), request)
 
 	// The request succeeds.
-	if err := request.Error(); err != nil {
+	if err := request.Error(time.Second); err != nil {
 		t.Error(err)
 	}
 }
