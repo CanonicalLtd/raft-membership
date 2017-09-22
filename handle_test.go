@@ -24,12 +24,11 @@ import (
 )
 
 func TestHandleChangeRequests_ErrUnknownLeader(t *testing.T) {
-	node := rafttest.NewNode()
-	node.Start()
-	defer node.Shutdown()
+	rafts, cleanup := rafttest.Cluster(t, rafttest.FSMs(3))
+	defer cleanup()
 
 	request := raftmembership.NewJoinRequest("1.2.3.4")
-	handleOneChangeRequest(node.Raft(), request)
+	handleOneChangeRequest(rafts[0], request)
 
 	err := request.Error(time.Second)
 
@@ -44,16 +43,18 @@ func TestHandleChangeRequests_ErrUnknownLeader(t *testing.T) {
 }
 
 func TestHandleChangeRequests_ErrDifferentLeader(t *testing.T) {
-	cluster := rafttest.NewCluster(2)
-	cluster.Start()
-	defer cluster.Shutdown()
+	notify := rafttest.Notify()
+	rafts, cleanup := rafttest.Cluster(t, rafttest.FSMs(2), notify)
+	defer cleanup()
 
-	node1 := cluster.LeadershipAcquired()
-	node2 := cluster.Peers(node1)[0]
-	node2.LeaderKnown()
+	i := notify.NextAcquired(time.Second)
+	j := rafttest.Other(rafts, i)
+
+	raft := rafts[j]
+	rafttest.WaitLeader(t, raft, time.Second)
 
 	request := raftmembership.NewLeaveRequest("1.2.3.4")
-	handleOneChangeRequest(node2.Raft(), request)
+	handleOneChangeRequest(raft, request)
 
 	err := request.Error(time.Second)
 
@@ -62,7 +63,7 @@ func TestHandleChangeRequests_ErrDifferentLeader(t *testing.T) {
 	}
 	switch err := err.(type) {
 	case *raftmembership.ErrDifferentLeader:
-		leader := node2.Raft().Leader()
+		leader := raft.Leader()
 		if err.Leader() != leader {
 			t.Errorf("expected leader\n%q\ngot\n%q", leader, err.Leader())
 		}
@@ -74,15 +75,11 @@ func TestHandleChangeRequests_ErrDifferentLeader(t *testing.T) {
 }
 
 func TestHandleChangeRequests_KnownPeer(t *testing.T) {
-	node := rafttest.NewNode()
-	node.Config.EnableSingleNode = true
-	node.Start()
-	defer node.Shutdown()
+	raft := rafttest.Node(t, rafttest.FSM())
+	defer raft.Shutdown()
 
-	node.LeaderKnown()
-
-	request := raftmembership.NewJoinRequest(node.Transport.LocalAddr())
-	handleOneChangeRequest(node.Raft(), request)
+	request := raftmembership.NewJoinRequest("0")
+	handleOneChangeRequest(raft, request)
 
 	// The request is effectively a no-op and returns no error.
 	if err := request.Error(time.Second); err != nil {
@@ -91,15 +88,11 @@ func TestHandleChangeRequests_KnownPeer(t *testing.T) {
 }
 
 func TestHandleChangeRequests_LeaveRequest(t *testing.T) {
-	node := rafttest.NewNode()
-	node.Config.EnableSingleNode = true
-	node.Start()
-	defer node.Shutdown()
+	raft := rafttest.Node(t, rafttest.FSM())
+	defer raft.Shutdown()
 
-	node.LeaderKnown()
-
-	request := raftmembership.NewLeaveRequest(node.Transport.LocalAddr())
-	handleOneChangeRequest(node.Raft(), request)
+	request := raftmembership.NewLeaveRequest("0")
+	handleOneChangeRequest(raft, request)
 
 	// The request succeeds.
 	if err := request.Error(time.Second); err != nil {

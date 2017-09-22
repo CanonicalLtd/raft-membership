@@ -21,12 +21,8 @@ import (
 )
 
 func TestHandleChangeRequests_InvalidChangeRequestKind(t *testing.T) {
-	node := rafttest.NewNode()
-	node.Config.EnableSingleNode = true
-	node.Start()
-	defer node.Shutdown()
-
-	node.LeaderKnown()
+	raft := rafttest.Node(t, rafttest.FSM())
+	defer raft.Shutdown()
 
 	request := &ChangeRequest{
 		kind: -1,
@@ -42,5 +38,5 @@ func TestHandleChangeRequests_InvalidChangeRequestKind(t *testing.T) {
 			t.Errorf("expected panic\n%q\ngot\n%q", want, got)
 		}
 	}()
-	HandleChangeRequests(node.Raft(), requests)
+	HandleChangeRequests(raft, requests)
 }
