@@ -64,7 +64,7 @@ func TestHandleChangeRequests_ErrDifferentLeader(t *testing.T) {
 	switch err := err.(type) {
 	case *raftmembership.ErrDifferentLeader:
 		leader := raft.Leader()
-		if err.Leader() != leader {
+		if err.Leader() != string(leader) {
 			t.Errorf("expected leader\n%q\ngot\n%q", leader, err.Leader())
 		}
 		break
@@ -91,7 +91,10 @@ func TestHandleChangeRequests_LeaveRequest(t *testing.T) {
 	raft := rafttest.Node(t, rafttest.FSM())
 	defer raft.Shutdown()
 
-	request := raftmembership.NewLeaveRequest("0")
+	request := raftmembership.NewJoinRequest("1")
+	handleOneChangeRequest(raft, request)
+
+	request = raftmembership.NewLeaveRequest("1")
 	handleOneChangeRequest(raft, request)
 
 	// The request succeeds.
