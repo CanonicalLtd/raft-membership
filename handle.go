@@ -16,6 +16,7 @@ package raftmembership
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/hashicorp/raft"
 )
@@ -25,6 +26,7 @@ import (
 // peers to the cluster according to the received requests.
 func HandleChangeRequests(r *raft.Raft, requests <-chan *ChangeRequest) {
 	for request := range requests {
+
 		// If we currently think we're the leader, let's try
 		// to handle the request, otherwise let's bail out
 		// directly.
@@ -39,7 +41,7 @@ func HandleChangeRequests(r *raft.Raft, requests <-chan *ChangeRequest) {
 		// Wrap not-leader errors.
 		if err == raft.ErrNotLeader {
 			if r.Leader() != "" {
-				err = &ErrDifferentLeader{leader: r.Leader()}
+				err = &ErrDifferentLeader{leader: string(r.Leader())}
 			} else {
 				err = &ErrUnknownLeader{}
 			}
@@ -47,9 +49,9 @@ func HandleChangeRequests(r *raft.Raft, requests <-chan *ChangeRequest) {
 
 		// Ignore errors due to a joining peer being already
 		// known.
-		if err == raft.ErrKnownPeer {
-			err = nil
-		}
+		//if err == raft.ErrKnownPeer {
+		//err = nil
+		//}
 
 		request.Done(err)
 	}
@@ -61,9 +63,15 @@ func raftMethodForRequest(request *ChangeRequest) func(*raft.Raft, string) raft.
 	kind := request.Kind()
 	switch kind {
 	case JoinRequest:
-		return (*raft.Raft).AddPeer
+		return func(r *raft.Raft, addr string) raft.Future {
+			return r.AddVoter(
+				raft.ServerID(addr), raft.ServerAddress(addr), 0, 10*time.Second)
+		}
 	case LeaveRequest:
-		return (*raft.Raft).RemovePeer
+		return func(r *raft.Raft, addr string) raft.Future {
+			return r.RemoveServer(
+				raft.ServerID(addr), 0, 10*time.Second)
+		}
 	default:
 		panic(fmt.Sprintf("invalid change request kind: %d", int(kind)))
 	}
