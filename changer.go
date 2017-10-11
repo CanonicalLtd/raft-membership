@@ -16,19 +16,21 @@ package raftmembership
 
 import (
 	"time"
+
+	"github.com/hashicorp/raft"
 )
 
-// Changer is an API that can be used by a raft peer to change its
+// Changer is an API that can be used by a raft server to change its
 // membership in a cluster (i.e. either join it or leave it).
 //
 // It works by using some transport layer (e.g. HTTP, TCP, etc) to
-// send a membership change request to a target peer that is part of
+// send a membership change request to a target server that is part of
 // the cluster and that can handle such requests, possibly redirecting
-// the requesting peer to another peer (e.g. the cluster leader).
+// the requesting server to another server (e.g. the cluster leader).
 //
 // It is effectively an extensions of the raft.Transport interface,
 // with additional semantics for joining/leaving a raft cluster.
 type Changer interface {
-	Join(addr string, timeout time.Duration) error
-	Leave(addr string, timeout time.Duration) error
+	Join(raft.ServerID, raft.ServerAddress, time.Duration) error
+	Leave(raft.ServerID, time.Duration) error
 }

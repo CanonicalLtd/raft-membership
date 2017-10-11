@@ -32,8 +32,7 @@ func HandleChangeRequests(r *raft.Raft, requests <-chan *ChangeRequest) {
 		// directly.
 		var err error
 		if r.State() == raft.Leader {
-			raftMethod := raftMethodForRequest(request)
-			err = raftMethod(r, request.Peer()).Error()
+			err = changeMembership(r, request).Error()
 		} else {
 			err = raft.ErrNotLeader
 		}
@@ -57,21 +56,15 @@ func HandleChangeRequests(r *raft.Raft, requests <-chan *ChangeRequest) {
 	}
 }
 
-// Return the appropriate Raft method to invoke for handling the given
-// request.
-func raftMethodForRequest(request *ChangeRequest) func(*raft.Raft, string) raft.Future {
+// Execute the appropriate Raft to handle the given request.
+func changeMembership(raft *raft.Raft, request *ChangeRequest) raft.Future {
 	kind := request.Kind()
+	timeout := 10 * time.Second // FIXME: should be configurable
 	switch kind {
 	case JoinRequest:
-		return func(r *raft.Raft, addr string) raft.Future {
-			return r.AddVoter(
-				raft.ServerID(addr), raft.ServerAddress(addr), 0, 10*time.Second)
-		}
+		return raft.AddVoter(request.ID(), request.Address(), 0, timeout)
 	case LeaveRequest:
-		return func(r *raft.Raft, addr string) raft.Future {
-			return r.RemoveServer(
-				raft.ServerID(addr), 0, 10*time.Second)
-		}
+		return raft.RemoveServer(request.ID(), 0, timeout)
 	default:
 		panic(fmt.Sprintf("invalid change request kind: %d", int(kind)))
 	}
