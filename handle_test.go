@@ -15,6 +15,7 @@
 package raftmembership_test
 
 import (
+	"strconv"
 	"testing"
 	"time"
 
@@ -27,7 +28,7 @@ func TestHandleChangeRequests_ErrUnknownLeader(t *testing.T) {
 	rafts, cleanup := rafttest.Cluster(t, rafttest.FSMs(3))
 	defer cleanup()
 
-	request := raftmembership.NewJoinRequest("1.2.3.4")
+	request := raftmembership.NewJoinRequest("1", "1.2.3.4")
 	handleOneChangeRequest(rafts[0], request)
 
 	err := request.Error(time.Second)
@@ -78,7 +79,7 @@ func TestHandleChangeRequests_KnownPeer(t *testing.T) {
 	raft := rafttest.Node(t, rafttest.FSM())
 	defer raft.Shutdown()
 
-	request := raftmembership.NewJoinRequest("0")
+	request := raftmembership.NewJoinRequest("0", "1.2.3.4")
 	handleOneChangeRequest(raft, request)
 
 	// The request is effectively a no-op and returns no error.
@@ -88,14 +89,17 @@ func TestHandleChangeRequests_KnownPeer(t *testing.T) {
 }
 
 func TestHandleChangeRequests_LeaveRequest(t *testing.T) {
-	raft := rafttest.Node(t, rafttest.FSM())
-	defer raft.Shutdown()
+	notify := rafttest.Notify()
+	fsms := rafttest.FSMs(3)
+	rafts, cleanup := rafttest.Cluster(t, fsms, notify)
+	defer cleanup()
 
-	request := raftmembership.NewJoinRequest("1")
-	handleOneChangeRequest(raft, request)
+	i := notify.NextAcquired(time.Second)
+	j := rafttest.Other(rafts, i)
 
-	request = raftmembership.NewLeaveRequest("1")
-	handleOneChangeRequest(raft, request)
+	id := raft.ServerID(strconv.Itoa(j))
+	request := raftmembership.NewLeaveRequest(id)
+	handleOneChangeRequest(rafts[i], request)
 
 	// The request succeeds.
 	if err := request.Error(time.Second); err != nil {

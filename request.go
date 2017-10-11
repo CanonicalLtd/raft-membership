@@ -17,47 +17,55 @@ package raftmembership
 import (
 	"fmt"
 	"time"
+
+	"github.com/hashicorp/raft"
 )
 
-// ChangeRequest represents a request to change a peer's membership in
+// ChangeRequest represents a request to change a server's membership in
 // a raft cluster (either join or leave).
 //
-// A requesting peer uses an implementation of the membership Changer
-// interface to connect to a target peer through some network
-// transport layer and to ask to join or leave the target peer's
-// cluster. The target peer internally uses ChangeRequest and
-// HandleChangeRequests as helpers to implement handlers to process
-// such requests coming from the network transport layer.
+// A requesting server uses an implementation of the membership Changer
+// interface to connect to a target server through some network transport layer
+// and to ask to join or leave the target server's cluster. The target server
+// internally uses ChangeRequest and HandleChangeRequests as helpers to
+// implement handlers to process such requests coming from the network
+// transport layer.
 type ChangeRequest struct {
-	peer string            // Address of the peer requesting the membership change
-	kind ChangeRequestKind // Kind of membership change being requested
-	done chan error        // Notify client code of request success or failure
+	id      raft.ServerID      // ID of the server requesting the membership change
+	address raft.ServerAddress // Address of the server requesting the membership change
+	kind    ChangeRequestKind  // Kind of membership change being requested
+	done    chan error         // Notify client code of request success or failure
 }
 
 // NewJoinRequest creates a new membership ChangeRequest to join a
 // cluster.
-func NewJoinRequest(peer string) *ChangeRequest {
+func NewJoinRequest(id raft.ServerID, address raft.ServerAddress) *ChangeRequest {
 	return &ChangeRequest{
-		peer: peer,
-		kind: JoinRequest,
-		done: make(chan error, 1),
+		id:      id,
+		address: address,
+		kind:    JoinRequest,
+		done:    make(chan error, 1),
 	}
 }
 
 // NewLeaveRequest creates a new membership ChangeRequest to leave a
 // cluster.
-func NewLeaveRequest(peer string) *ChangeRequest {
+func NewLeaveRequest(id raft.ServerID) *ChangeRequest {
 	return &ChangeRequest{
-		peer: peer,
+		id:   id,
 		kind: LeaveRequest,
 		done: make(chan error, 1),
 	}
 }
 
-// Peer returns the address of the peer requesting to change its
-// membership.
-func (r *ChangeRequest) Peer() string {
-	return r.peer
+// ID of the server requesting to change its membership.
+func (r *ChangeRequest) ID() raft.ServerID {
+	return r.id
+}
+
+// Address of the server requesting to change its membership.
+func (r *ChangeRequest) Address() raft.ServerAddress {
+	return r.address
 }
 
 // Kind is the type of membership change requested, either join leave.
