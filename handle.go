@@ -46,12 +46,6 @@ func HandleChangeRequests(r *raft.Raft, requests <-chan *ChangeRequest) {
 			}
 		}
 
-		// Ignore errors due to a joining peer being already
-		// known.
-		//if err == raft.ErrKnownPeer {
-		//err = nil
-		//}
-
 		request.Done(err)
 	}
 }

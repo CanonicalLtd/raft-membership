@@ -32,5 +32,5 @@ import (
 // with additional semantics for joining/leaving a raft cluster.
 type Changer interface {
 	Join(raft.ServerID, raft.ServerAddress, time.Duration) error
-	Leave(raft.ServerID, time.Duration) error
+	Leave(raft.ServerID, raft.ServerAddress, time.Duration) error
 }
