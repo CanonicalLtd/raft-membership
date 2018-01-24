@@ -52,7 +52,6 @@ func TestHandleChangeRequests_ErrDifferentLeader(t *testing.T) {
 	j := rafttest.Other(rafts, i)
 
 	raft := rafts[j]
-	rafttest.WaitLeader(t, raft, time.Second)
 
 	request := raftmembership.NewLeaveRequest("1.2.3.4")
 	handleOneChangeRequest(raft, request)
