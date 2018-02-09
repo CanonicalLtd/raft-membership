@@ -25,8 +25,8 @@ import (
 )
 
 func TestHandleChangeRequests_ErrUnknownLeader(t *testing.T) {
-	rafts, cleanup := rafttest.Cluster(t, rafttest.FSMs(3))
-	defer cleanup()
+	rafts, control := rafttest.Cluster(t, rafttest.FSMs(3))
+	defer control.Close()
 
 	request := raftmembership.NewJoinRequest("1", "1.2.3.4")
 	handleOneChangeRequest(rafts[0], request)
@@ -44,17 +44,14 @@ func TestHandleChangeRequests_ErrUnknownLeader(t *testing.T) {
 }
 
 func TestHandleChangeRequests_ErrDifferentLeader(t *testing.T) {
-	notify := rafttest.Notify()
-	rafts, cleanup := rafttest.Cluster(t, rafttest.FSMs(2), notify)
-	defer cleanup()
+	_, control := rafttest.Cluster(t, rafttest.FSMs(2))
+	defer control.Close()
 
-	i := notify.NextAcquired(time.Second)
-	j := rafttest.Other(rafts, i)
-
-	raft := rafts[j]
+	raft1 := control.LeadershipAcquired(time.Second)
+	raft2 := control.Other(raft1)
 
 	request := raftmembership.NewLeaveRequest("1.2.3.4")
-	handleOneChangeRequest(raft, request)
+	handleOneChangeRequest(raft2, request)
 
 	err := request.Error(time.Second)
 
@@ -63,7 +60,7 @@ func TestHandleChangeRequests_ErrDifferentLeader(t *testing.T) {
 	}
 	switch err := err.(type) {
 	case *raftmembership.ErrDifferentLeader:
-		leader := raft.Leader()
+		leader := raft1.Leader()
 		if err.Leader() != string(leader) {
 			t.Errorf("expected leader\n%q\ngot\n%q", leader, err.Leader())
 		}
@@ -75,8 +72,8 @@ func TestHandleChangeRequests_ErrDifferentLeader(t *testing.T) {
 }
 
 func TestHandleChangeRequests_KnownPeer(t *testing.T) {
-	raft := rafttest.Node(t, rafttest.FSM())
-	defer raft.Shutdown()
+	raft, cleanup := rafttest.Node(t, rafttest.FSM())
+	defer cleanup()
 
 	request := raftmembership.NewJoinRequest("0", "1.2.3.4")
 	handleOneChangeRequest(raft, request)
@@ -88,17 +85,16 @@ func TestHandleChangeRequests_KnownPeer(t *testing.T) {
 }
 
 func TestHandleChangeRequests_LeaveRequest(t *testing.T) {
-	notify := rafttest.Notify()
 	fsms := rafttest.FSMs(3)
-	rafts, cleanup := rafttest.Cluster(t, fsms, notify)
-	defer cleanup()
+	_, control := rafttest.Cluster(t, fsms)
+	defer control.Close()
 
-	i := notify.NextAcquired(time.Second)
-	j := rafttest.Other(rafts, i)
+	raft1 := control.LeadershipAcquired(time.Second)
+	raft2 := control.Other(raft1)
 
-	id := raft.ServerID(strconv.Itoa(j))
+	id := raft.ServerID(strconv.Itoa(control.Index(raft2)))
 	request := raftmembership.NewLeaveRequest(id)
-	handleOneChangeRequest(rafts[i], request)
+	handleOneChangeRequest(raft1, request)
 
 	// The request succeeds.
 	if err := request.Error(time.Second); err != nil {
